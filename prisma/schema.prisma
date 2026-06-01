@@ -1,13 +1,108 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
+}
+
+enum UserRole {
+  STUDENT
+  STALL_OWNER
+  ADMIN
+}
+
+enum OrderStatus {
+  PENDING
+  ACCEPTED
+  PREPARING
+  READY
+  COMPLETED
+  CANCELLED
+  REJECTED
+}
+
+model User {
+  id           Int        @id @default(autoincrement())
+  name         String     @db.VarChar(100)
+  email        String     @unique @db.VarChar(150)
+  role         UserRole
+  isActive     Boolean    @default(true) @map("is_active")
+  warningCount Int        @default(0) @map("warning_count")
+  isBanned     Boolean    @default(false) @map("is_banned")
+  createdAt    DateTime   @default(now()) @map("created_at") @db.Timestamp(6)
+
+  stalls       Stall[]
+  orders       Order[]    @relation("StudentOrders")
+
+  @@map("users")
+}
+
+model Stall {
+  id           Int        @id @default(autoincrement())
+  ownerId      Int        @map("owner_id")
+  name         String     @db.VarChar(100)
+  description  String?    @db.Text
+  imageUrl     String?    @map("image_url") @db.VarChar(255)
+  location     String     @db.VarChar(100)
+  isActive     Boolean    @default(true) @map("is_active")
+  openingHour  String     @default("06:00") @map("opening_hour") @db.VarChar(10)
+  closingHour  String     @default("21:00") @map("closing_hour") @db.VarChar(10)
+  createdAt    DateTime   @default(now()) @map("created_at") @db.Timestamp(6)
+
+  owner        User       @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  menuItems    MenuItem[]
+  orders       Order[]
+
+  @@map("stalls")
+}
+
+model MenuItem {
+  id           Int        @id @default(autoincrement())
+  stallId      Int        @map("stall_id")
+  name         String     @db.VarChar(100)
+  description  String?    @db.Text
+  price        Decimal    @db.Decimal(10, 2)
+  imageUrl     String?    @map("image_url") @db.VarChar(255)
+  category     String?    @db.VarChar(50)
+  isAvailable  Boolean    @default(true) @map("is_available")
+
+  stall        Stall      @relation(fields: [stallId], references: [id], onDelete: Cascade)
+  orderItems   OrderItem[]
+
+  @@map("menu_items")
+}
+
+model Order {
+  id              Int          @id @default(autoincrement())
+  studentId       Int          @map("student_id")
+  stallId         Int          @map("stall_id")
+  status          OrderStatus  @default(PENDING)
+  pickupTime      String       @map("pickup_time") @db.VarChar(20)
+  totalPrice      Decimal      @map("total_price") @db.Decimal(10, 2)
+  rejectionReason String       @default("") @map("rejection_reason") @db.Text
+  createdAt       DateTime     @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt       DateTime     @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  student         User         @relation("StudentOrders", fields: [studentId], references: [id], onDelete: Cascade)
+  stall           Stall        @relation(fields: [stallId], references: [id], onDelete: Cascade)
+  items           OrderItem[]
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id               Int       @id @default(autoincrement())
+  orderId          Int       @map("order_id")
+  menuItemId       Int       @map("menu_item_id")
+  menuItemName     String    @map("menu_item_name") @db.VarChar(100)
+  menuItemPrice    Decimal   @map("menu_item_price") @db.Decimal(10, 2)
+  quantity         Int
+  notes            String    @default("") @db.Text
+  subtotal         Decimal   @db.Decimal(10, 2)
+
+  order            Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  menuItem         MenuItem  @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+
+  @@map("order_items")
 }
