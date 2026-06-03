@@ -1,10 +1,16 @@
 import type { Express } from "express";
-import { publicRouter } from "./public-routes";
+import { authRouter } from "./auth-routes";
+import { stallRouter } from "./stall-routes";
+import { menuItemRouter } from "./menu-item-routes";
+import { orderRouter } from "./order-routes";
 import { userRouter } from "./user-routes";
-import { privateRouter } from "./private-routes";
+import { authMiddleware } from "../middlewares/auth-middleware";
 
 export function registerRoutes(app: Express) {
-  app.use("/api/public", publicRouter);
-  app.use("/api/users", userRouter);
-  app.use("/api/private", privateRouter);
+  app.use("/api/auth", authRouter);
+
+  app.use("/api/stalls", authMiddleware, stallRouter);
+  app.use("/api/menu-items", authMiddleware, menuItemRouter);
+  app.use("/api/orders", authMiddleware, orderRouter);
+  app.use("/api/users", authMiddleware, userRouter);
 }

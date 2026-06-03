@@ -15,6 +15,10 @@ const legalTransitions: Record<string, string[]> = {
 
 export const orderService = {
   placeOrder: async (data: CreateOrderInput) => {
+    const student = await prisma.user.findUnique({ where: { id: data.studentId } });
+    if (!student) throw new AppError(404, "Student not found");
+    if (student.isBanned) throw new AppError(403, "Forbidden: You are banned from placing orders");
+
     const menuItems = await prisma.menuItem.findMany({
       where: { id: { in: data.items.map((item) => item.menuItemId) }, stallId: data.stallId },
     });
@@ -30,8 +34,8 @@ export const orderService = {
         throw new AppError(400, "One or more menu items are unavailable");
       }
 
-      const menuItemPrice = new Prisma.Decimal(menuItem.price.toString());
-      const subtotal = menuItemPrice.mul(item.quantity);
+      const menuItemPrice = menuItem.price;
+      const subtotal = menuItemPrice * item.quantity;
 
       return {
         menuItemId: menuItem.id,
@@ -43,7 +47,7 @@ export const orderService = {
       };
     });
 
-    const totalPrice = orderItems.reduce((sum, item) => sum.plus(item.subtotal), new Prisma.Decimal(0));
+    const totalPrice = orderItems.reduce((sum, item) => sum + item.subtotal, 0);
 
     return prisma.$transaction(async (transaction) => {
       const order = await transaction.order.create({
@@ -84,16 +88,34 @@ export const orderService = {
       throw new AppError(400, `Illegal status transition from ${order.status} to ${data.status}`);
     }
 
-    if (data.status === "REJECTED" && !data.rejectionReason.trim()) {
+    if (data.status === "REJECTED" && !data.rejectionReason?.trim()) {
       throw new AppError(400, "Rejection reason is required when rejecting an order");
     }
 
-    return prisma.order.update({
-      where: { id },
-      data: {
-        status: data.status,
-        rejectionReason: data.status === "REJECTED" ? data.rejectionReason : "",
-      },
+    return prisma.$transaction(async (tx) => {
+      const updatedOrder = await tx.order.update({
+        where: { id },
+        data: {
+          status: data.status,
+          rejectionReason: data.status === "REJECTED" ? data.rejectionReason : "",
+        },
+      });
+
+      if (data.status === "REJECTED") {
+        const student = await tx.user.findUnique({ where: { id: order.studentId } });
+        if (student) {
+          const newWarningCount = student.warningCount + 1;
+          await tx.user.update({
+            where: { id: student.id },
+            data: {
+              warningCount: newWarningCount,
+              isBanned: newWarningCount >= 3 ? true : student.isBanned,
+            },
+          });
+        }
+      }
+
+      return updatedOrder;
     });
   },
 };

@@ -29,9 +29,12 @@ export const deleteUser = asyncHandler(async (req: Request, res: Response) => {
   res.status(204).send(await userService.remove(Number(req.params.id)));
 });
 
+import { signJwt } from "../utils/jwt-util";
+
 export const loginUser = asyncHandler(async (req: Request, res: Response) => {
   const user = await userService.loginOrCreate(req.body);
-  res.json({ data: toPublicUser(user) });
+  const token = signJwt({ userId: user.id, email: user.email, role: user.role });
+  res.json({ data: { user: toPublicUser(user), token } });
 });
 
 export const banUser = asyncHandler(async (req: Request, res: Response) => {

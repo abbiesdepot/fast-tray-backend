@@ -1,4 +1,3 @@
-import { Prisma } from "@prisma/client";
 import { prisma } from "../utils/database-util";
 import type { SalesSummary, TopSellingItem } from "../models";
 
@@ -21,23 +20,23 @@ export const salesSummaryService = {
 
     const totalRevenue = orders
       .filter((order) => order.status === "COMPLETED")
-      .reduce((sum, order) => sum.plus(order.totalPrice), new Prisma.Decimal(0));
+      .reduce((sum, order) => sum + order.totalPrice, 0);
 
     const itemMap = new Map<number, TopSellingItem>();
 
     for (const order of orders.filter((entry) => entry.status === "COMPLETED")) {
       for (const item of order.items) {
-        const revenue = new Prisma.Decimal(item.menuItemPrice.toString()).mul(item.quantity);
+        const revenue = item.menuItemPrice * item.quantity;
         const existing = itemMap.get(item.menuItemId);
         if (existing) {
           existing.quantitySold += item.quantity;
-          existing.revenue += Number(revenue);
+          existing.revenue += revenue;
         } else {
           itemMap.set(item.menuItemId, {
             menuItemId: item.menuItemId,
             menuItemName: item.menuItemName,
             quantitySold: item.quantity,
-            revenue: Number(revenue),
+            revenue,
           });
         }
       }
@@ -50,7 +49,7 @@ export const salesSummaryService = {
       completedOrders: orders.filter((order) => order.status === "COMPLETED").length,
       cancelledOrders: orders.filter((order) => order.status === "CANCELLED").length,
       rejectedOrders: orders.filter((order) => order.status === "REJECTED").length,
-      totalRevenue: Number(totalRevenue),
+      totalRevenue: totalRevenue,
       topSellingItems: Array.from(itemMap.values()).sort((left, right) => right.quantitySold - left.quantitySold),
     };
   },

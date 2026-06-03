@@ -9,6 +9,7 @@ export const createUserSchema = z.object({
 
 export const loginUserSchema = z.object({
   email: z.string().email().max(150),
+  name: z.string().min(1).max(100),
   role: z.enum(["STUDENT", "STALL_OWNER", "ADMIN"]),
 });
 
