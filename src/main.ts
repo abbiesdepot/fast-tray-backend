@@ -1,7 +1,10 @@
+import 'dotenv/config'
 import express from "express";
 import { registerRoutes } from "./routes";
 import { errorMiddleware } from "./middlewares/error-middleware";
 import { env } from "./utils/env-util";
+
+console.log("DATABASE_URL:", process.env.DATABASE_URL);
 
 export const app = express();
 
