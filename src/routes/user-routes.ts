@@ -1,11 +1,12 @@
 import { Router } from "express";
-import { listUsers, getUser, createUser, updateUser, deleteUser, loginUser, banUser, warnUser } from "../controllers/user-controller";
+import { listUsers, getUser, createUser, registerUser, updateUser, deleteUser, loginUser, banUser, warnUser } from "../controllers/user-controller";
 import { validateRequest } from "../validations/validation";
-import { createUserSchema, loginUserSchema, updateUserSchema, userIdParamsSchema } from "../validations/user-validation";
+import { createUserSchema, registerUserSchema, loginUserSchema, updateUserSchema, userIdParamsSchema } from "../validations/user-validation";
 
 export const userRouter = Router();
 
 userRouter.post("/login", validateRequest(loginUserSchema), loginUser);
+userRouter.post("/register", validateRequest(registerUserSchema), registerUser);
 userRouter.get("/", listUsers);
 userRouter.get("/:id", validateRequest(userIdParamsSchema, "params"), getUser);
 userRouter.post("/", validateRequest(createUserSchema), createUser);

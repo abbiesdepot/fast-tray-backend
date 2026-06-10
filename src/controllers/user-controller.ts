@@ -20,6 +20,11 @@ export const createUser = asyncHandler(async (req: Request, res: Response) => {
   res.status(201).json({ data: toPublicUser(user) });
 });
 
+export const registerUser = asyncHandler(async (req: Request, res: Response) => {
+  const user = await userService.register(req.body);
+  res.status(201).json({ data: toPublicUser(user) });
+});
+
 export const updateUser = asyncHandler(async (req: Request, res: Response) => {
   const user = await userService.update(Number(req.params.id), req.body);
   res.json({ data: toPublicUser(user) });
@@ -30,7 +35,7 @@ export const deleteUser = asyncHandler(async (req: Request, res: Response) => {
 });
 
 export const loginUser = asyncHandler(async (req: Request, res: Response) => {
-  const user = await userService.loginOrCreate(req.body);
+  const user = await userService.login(req.body);
   res.json({ data: toPublicUser(user) });
 });
 

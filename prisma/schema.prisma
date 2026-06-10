@@ -26,6 +26,7 @@ model User {
   id           Int        @id @default(autoincrement())
   name         String     @db.VarChar(100)
   email        String     @unique @db.VarChar(150)
+  password     String     @default("") @db.VarChar(255)
   role         UserRole
   isActive     Boolean    @default(true) @map("is_active")
   warningCount Int        @default(0) @map("warning_count")

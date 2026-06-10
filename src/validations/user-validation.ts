@@ -7,9 +7,16 @@ export const createUserSchema = z.object({
   isActive: z.boolean().optional(),
 });
 
+export const registerUserSchema = z.object({
+  name: z.string().min(1).max(100),
+  email: z.string().email().max(150),
+  password: z.string().min(6),
+  role: z.enum(["STUDENT", "STALL_OWNER", "ADMIN"]).default("STUDENT"),
+});
+
 export const loginUserSchema = z.object({
   email: z.string().email().max(150),
-  role: z.enum(["STUDENT", "STALL_OWNER", "ADMIN"]),
+  password: z.string().min(6),
 });
 
 export const updateUserSchema = createUserSchema.partial().refine((data) => Object.keys(data).length > 0, {
@@ -17,6 +24,7 @@ export const updateUserSchema = createUserSchema.partial().refine((data) => Obje
 });
 
 export type CreateUserInput = z.infer<typeof createUserSchema>;
+export type RegisterUserInput = z.infer<typeof registerUserSchema>;
 export type LoginUserInput = z.infer<typeof loginUserSchema>;
 export type UpdateUserInput = z.infer<typeof updateUserSchema>;
 
