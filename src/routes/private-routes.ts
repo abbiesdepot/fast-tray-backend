@@ -8,7 +8,7 @@ import { adminRouter } from "./admin-routes";
 export const privateRouter = Router();
 
 privateRouter.use(authMiddleware);
-privateRouter.use(stallRouter);
+privateRouter.use("/stalls", stallRouter);
 privateRouter.use(menuItemRouter);
-privateRouter.use(orderRouter);
+privateRouter.use("/orders", orderRouter);
 privateRouter.use("/admin", adminRouter);
