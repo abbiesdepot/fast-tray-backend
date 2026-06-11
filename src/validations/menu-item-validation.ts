@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const createMenuItemSchema = z.object({
-  stallId: z.coerce.number().int().positive(),
+  stallId: z.coerce.number().int().positive().optional(),
   name: z.string().min(1).max(100),
   description: z.string().optional(),
   price: z.coerce.number().positive(),
